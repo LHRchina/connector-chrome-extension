@@ -1,0 +1,13 @@
+{
+  "name": "Tomato-relay-server",
+  "version": "1.0.0",
+  "description": "Local relay server bridging Tomato AI to Chrome extension via CDP",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --verbose"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
