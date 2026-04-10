@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    /* Semantic colors consistent with Tomato-design */
+    :root {
+      --text: #141414;
+      --text-secondary: #636261;
+      --text-tertiary: #838280;
+      --border: #E6E6E6;
+      --fill: #EFEFEF;
+      --fill-tertiary: #F9F9F9;
+      --bg: #FDFDFD;
+      --primary: #73CD94;
+      --primary-hover: #8EE5A1;
+      --primary-text: #FDFDFD;
+      /* Tomato Design secondary button token */
+      --bg-highlight: #080807;
+      --bg-highlight-hover: #2a2a29;
+      --text-on-primary: #FDFDFD;
+      --success: #73CD94;
+      --error: #FF4D4F;
+      --error-bg: #FFF2F0;
+      --warning: #FAAD14;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --radius-lg: 16px;
+      --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --shadow-card-primary: 0 10px 15px -3px rgba(115, 205, 148, 0.08), 0 4px 6px -4px rgba(115, 205, 148, 0.04);
+    }
+
+    /* Top cartoon eyes animation area */
+    .face-container {
+      position: relative;
+      width: 100%;
+      padding: 12px 16px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .face-inner {
+      position: relative;
+      margin-left: 0;
+      width: 62px;
+      height: 62px;
+      overflow: hidden;
+      border-radius: 12px;
+      transform: scale(0.8);
+      transform-origin: left top;
+    }
+
+    .face-caption-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .face-caption-desc {
+      font-size: 11px;
+      color: var(--text-quaternary);
+      opacity: 0.5;
+    }
+
+    .face-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .face-eye {
+      position: absolute;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+      width: 14px;
+      height: 18px;
+      border-radius: 50% / 60%;
+      background-color: #ffffff;
+      transition: height 0.15s ease, border-radius 0.15s ease;
+    }
+
+    .face-eye-left {
+      top: 25px;
+      left: 16px;
+    }
+
+    .face-eye-right {
+      top: 25px;
+      left: 32px;
+    }
+
+    .face-eye.blink {
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .face-pupil {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background-color: #000000;
+      margin-bottom: 4px;
+      transition: transform 0.1s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 0;
+      color: var(--text);
+      background: #ffffff;
+      font-size: 13px;
+      box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Inner content container: no extra card wrapper, layout only */
+    .status-card {
+      background: transparent;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      margin: 8px 0 0;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: none;
+    }
+
+    .card-body {
+      padding: 12px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .status-row .refresh-btn,
+    .status-row .btn-inline {
+      margin-left: auto;
+    }
+
+    .status-row .value {
+      flex: 1;
+      text-align: right;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .status-row .label {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Status icon: empty circle / checkmark, Remix Icon style */
+    .status-row .status-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-row .status-icon svg {
+      width: 12px;
+      height: 12px;
+      color: var(--border);
+      opacity: 0;
+      transition: color 0.15s ease-out, opacity 0.15s ease-out;
+    }
+
+    .status-row .status-icon.connected {
+      border-color: var(--success);
+    }
+
+    .status-row .status-icon.connected svg {
+      color: var(--success);
+      opacity: 1;
+    }
+
+    .refresh-btn {
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .refresh-btn.spinning svg {
+      animation: spin 1s linear infinite;
+    }
+
+    .status-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .status-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .status-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn-inline {
+      padding: 6px 10px;
+      font-size: 12px;
+      width: auto;
+      min-width: 0;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* Tomato Design secondary button: dark background + light text */
+    .btn-secondary {
+      background: var(--bg-highlight);
+      color: var(--text-on-primary);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-highlight-hover);
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: var(--text-on-primary);
+    }
+
+    /* Disconnect button hover: no color change */
+    .btn-danger:hover:not(:disabled) {
+      background: var(--error);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Separator line */
+    .popup-separator {
+      height: 0;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* Footer area: display user info */
+    .popup-footer {
+      background: rgba(239, 239, 239, 0.6);
+      padding: 12px 16px 14px;
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .popup-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .popup-user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background-color: #d9d9d9;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #ffffff;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .popup-user-main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .popup-user-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .popup-user-email {
+      font-size: 11px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .popup-user-version {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    .popup-footer-version {
+      margin-left: 12px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .popup-footer-minimal {
+      padding: 0;
+      height: 8px;
+    }
+
+    .popup-footer-minimal .popup-user,
+    .popup-footer-minimal .popup-footer-version {
+      display: none;
+    }
+
+    .error-msg {
+      color: var(--error);
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: var(--error-bg);
+      border-radius: var(--radius-sm);
+      display: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #connected-section {
+      margin-top: 12px;
+    }
+
+    .connected-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .tab-list {
+      max-height: 140px;
+      overflow-y: auto;
+      border-radius: var(--radius-sm);
+    }
+
+    .tab-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .tab-list::-webkit-scrollbar-thumb {
+      background: var(--fill);
+      border-radius: 3px;
+    }
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+      margin-bottom: 2px;
+      font-size: 12px;
+    }
+
+    .tab-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .tab-item .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 9999px;
+      background: var(--text-tertiary);
+    }
+
+    .tab-item .dot.green {
+      background: var(--success);
+    }
+
+    .tab-item .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      color: var(--text-tertiary);
+    }
+
+    .popup-top-strip {
+      height: 4px;
+      background: #f5f5f5;
+      width: 100%;
+    }
+
+    /* Language switcher: tab style, light background, positioned top-right */
+    .lang-switcher {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      background: var(--fill-tertiary);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 500;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    .lang-btn:hover {
+      color: var(--text);
+    }
+
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="popup-top-strip"></div>
+  <div class="face-container">
+    <!-- Language switcher (top-right) -->
+    <div class="lang-switcher" id="lang-switcher">
+      <button type="button" class="lang-btn" data-lang="zh" id="lang-zh">CN</button>
+      <button type="button" class="lang-btn" data-lang="en" id="lang-en">EN</button>
+    </div>
+    <div class="face-inner">
+      <img src="Browser_plugin_emojibg.png" alt="" />
+      <div class="face-eye face-eye-left">
+        <div class="face-pupil"></div>
+      </div>
+      <div class="face-eye face-eye-right">
+        <div class="face-pupil"></div>
+      </div>
+    </div>
+    <div class="face-caption-title" id="face-title"></div>
+    <div class="face-caption-desc" id="face-desc"></div>
+  </div>
+
+  <div class="status-card">
+    <div class="card-header">
+      <h2 class="card-title" id="card-title"></h2>
+      <p class="card-subtitle" id="card-subtitle"></p>
+    </div>
+    <div class="card-body">
+      <div class="status-row">
+        <div class="status-icon" id="relay-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z">
+            </path>
+          </svg>
+        </div>
+        <span class="label" id="relay-label"></span>
+        <span class="value" id="relay-status"></span>
+        <button type="button" class="refresh-btn" id="refresh-btn" title="">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+          </svg>
+        </button>
+      </div>
+      <div class="status-row">
+        <div class="status-icon" id="tab-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z">
+            </path>
+          </svg>
+        </div>
+        <span class="label" id="tab-label"></span>
+        <span class="value" id="tab-status">-</span>
+        <button type="button" class="btn btn-secondary" id="toggle-btn" disabled></button>
+      </div>
+      <div id="connected-section" style="display:none">
+        <div class="connected-label" id="connected-tabs-label"></div>
+        <div class="tab-list" id="tab-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-footer">
+    <div class="popup-user" id="popup-user">
+      <div class="popup-user-avatar" id="popup-user-avatar"></div>
+      <div class="popup-user-main">
+        <div class="popup-user-name" id="popup-user-name"></div>
+        <div class="popup-user-email" id="popup-user-email"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
